@@ -9,6 +9,7 @@ struct sPhysicsWorld {
     uint32_t width = 0u;
     uint32_t height = 0u;
 
+    float camera_angle = 0.0f;
     Renderer::sCamera    camera;
     Renderer::sMeshRenderer sphere_renderer;
     

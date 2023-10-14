@@ -1,5 +1,5 @@
 #pragma once
-
+#include<iostream>
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/geometric.hpp>
 #include <glm/glm.hpp>
@@ -48,7 +48,7 @@ namespace Renderer {
         void look_at(const glm::vec3 &c, const glm::vec3 &from) {
             position = from;
             center = c;
-            
+
             f = glm::normalize(glm::vec3{center.x - position.x, center.y - position.y, center.z - position.z});
             s = glm::normalize(glm::cross(f, glm::vec3{0.f, 1.0f, 0.0f}));
             u = glm::cross(s, f);

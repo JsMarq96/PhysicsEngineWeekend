@@ -8,7 +8,7 @@
 #include "gl_shaders.h"
 
 void Renderer::sMeshRenderer::create_from_file(const char* obj_file) {
-    // Using tinyObjLoader HOW DO YOU RELEASE THIS?????
+    // Using tinyObjLoader HOW DO YOU CLEAN THIS?????
     tinyobj::ObjReaderConfig reader_config;
     reader_config.mtl_search_path = "./";
 
