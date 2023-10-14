@@ -33,4 +33,10 @@ add_subdirectory(libraries/gl3w)
 
 add_subdirectory(libraries/glm)
 
-target_link_libraries(phys_weekend glm glfw gl3w)
+add_subdirectory(libraries/tinyobjloader)
+
+target_link_libraries(phys_weekend glm glfw gl3w tinyobjloader)
+
+add_custom_command(TARGET phys_weekend POST_BUILD
+                   COMMAND ${CMAKE_COMMAND} -E copy_directory
+                       ${CMAKE_SOURCE_DIR}/resources $<TARGET_FILE_DIR:phys_weekend>/resources)

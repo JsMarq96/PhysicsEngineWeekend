@@ -6,6 +6,10 @@
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 
+#define TINYOBJLOADER_IMPLEMENTATION
+#include <tiny_obj_loader.h>
+
+#include "render/mesh.h"
 
 #define WIN_WIDTH	640
 #define WIN_HEIGHT	480
@@ -59,6 +63,10 @@ int main() {
 
     glfwGetFramebufferSize(app_state.window, &width, &height);
 
+
+    Renderer::sMeshRenderer mesh_render;
+
+    mesh_render.create_from_file("../resources/sphere.obj");
 
     while(!glfwWindowShouldClose(app_state.window) && !app_state.close_window) {
         glfwMakeContextCurrent(app_state.window);

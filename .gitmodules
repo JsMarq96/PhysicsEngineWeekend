@@ -10,3 +10,6 @@
 [submodule "libraries/gl3w"]
 	path = libraries/gl3w
 	url = https://github.com/skaslev/gl3w.git
+[submodule "libraries/tinyobjloader"]
+	path = libraries/tinyobjloader
+	url = https://github.com/tinyobjloader/tinyobjloader.git
