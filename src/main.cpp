@@ -90,10 +90,11 @@ int main() {
         // Update here
         application.render();
 
+        application.update(delta_time);
+
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
-        application.update(delta_time);
 
         glfwSwapBuffers(app_state.window);
 

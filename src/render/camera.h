@@ -16,6 +16,7 @@ namespace Renderer {
 
     struct sCamera {
         glm::vec3       position = {0.0f, 0.0f, 0.0f};
+        glm::vec3       center;
 
         glm::vec3       u = {};
         glm::vec3       s = {};
@@ -44,8 +45,10 @@ namespace Renderer {
                                     u);
         }
 
-        void look_at(const glm::vec3 &center, const glm::vec3 &from) {
+        void look_at(const glm::vec3 &c, const glm::vec3 &from) {
             position = from;
+            center = c;
+            
             f = glm::normalize(glm::vec3{center.x - position.x, center.y - position.y, center.z - position.z});
             s = glm::normalize(glm::cross(f, glm::vec3{0.f, 1.0f, 0.0f}));
             u = glm::cross(s, f);

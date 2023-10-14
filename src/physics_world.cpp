@@ -1,14 +1,21 @@
 #include "physics_world.h"
 
+#include <imgui.h>
 #include <glm/glm.hpp>
 
 void sPhysicsWorld::init() {
-    sphere_renderer.create_from_file("../resources/sphere.obj");
+    sphere_renderer.create_from_file("resources/sphere.obj");
 
     camera.look_at({0.0f, 0.0f, 0.0f}, {2.0f, 2.0f, 2.0f});
 }
 void sPhysicsWorld::update(const float delta) {
     sphere_renderer.add(glm::mat4(1.0f), {1.0f, 0.0f, 0.0f, 1.0f});
+
+    ImGui::Begin("Camera control");
+    if (ImGui::SliderFloat3("Camera look at", (float*)&camera.center, -5.0f, 5.0f)) {
+        camera.look_at(camera.center, camera.position);
+    }
+    ImGui::End();
 }
 
 void sPhysicsWorld::render() {
