@@ -29,5 +29,6 @@ namespace Renderer {
         void create_from_file(const char* obj_file);
         void render(const glm::mat4 &viewproj_mat) const;
         void clean();
+        void add(const glm::mat4 &model, const glm::vec4 &color);
     };
 }

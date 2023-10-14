@@ -150,3 +150,10 @@ void Renderer::sMeshRenderer::render(const glm::mat4 &viewproj_mat) const {
 void Renderer::sMeshRenderer::clean() {
     // TODO
 }
+
+void Renderer::sMeshRenderer::add(const glm::mat4 &model, 
+                                  const glm::vec4 &color) {
+    models[render_count] = model;
+    colors[render_count] = color;
+    render_count++;
+}
