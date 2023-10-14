@@ -1,9 +1,11 @@
 #include "physics_world.h"
-#include "glm/matrix.hpp"
 
+#include "glm/matrix.hpp"
 #include <imgui.h>
 #include <glm/glm.hpp>
 #include <glm/gtx/quaternion.hpp>
+
+#include "intersections.h"
 
 glm::vec3 rotate_arround(const glm::vec3  &pos, 
                          const glm::vec3  &center, 
@@ -21,7 +23,7 @@ void sPhysicsWorld::init() {
 
     add_body({  .type = SPHERE_COLLIDER,
                 .inv_mass = 1.0f / 5.0f,
-                .position = {0.0f, 1.0f, 0.0f},
+                .position = {0.0f, 3.0f, 0.0f},
                 .scale = {1.0f, 1.0f, 1.0f},
                 .orientation = {1.0f, 0.0f, 0.0f, 0.0f},
                 .color = {0.05f, 0.05f, 0.05f, 1.0f}
@@ -65,12 +67,30 @@ void sPhysicsWorld::physics_update(const float delta) {
         apply_impulse(i, glm::vec3(0.0f, -10.0f, 0.0f) * (1.0f / bodies[i].inv_mass) * delta);
     }
 
+    // Collision detection
+    // Only skip tests in one direction with static objects
+    for(uint8_t i = 0u; i < BODY_TOTAL_SIZE; i++) {
+        if (!is_body_enabled[i] || bodies[i].inv_mass == 0.0f) {
+            continue;
+        }
+        for(uint8_t j = i + 1u; j < BODY_TOTAL_SIZE; j++) {
+            if (!is_body_enabled[j]) {
+                continue;
+            }
+
+            if (Intersection::sphere_sphere(bodies[i], bodies[j])) {
+                speeds[i].linear_velocity = {0.0f, 0.0f, 0.0f};
+                speeds[j].linear_velocity = {0.0f, 0.0f, 0.0f};
+            }
+        }
+    }
+
     // Integrate velocity into position
     for(uint8_t i = 0u; i < BODY_TOTAL_SIZE; i++) {
         if (!is_body_enabled[i]) {
             continue;
         }
-        
+
         bodies[i].position += speeds[i].linear_velocity * delta;
     }
 }
