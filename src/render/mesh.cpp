@@ -129,7 +129,7 @@ void Renderer::sMeshRenderer::create_from_file(const char* obj_file) {
 }
 
 void Renderer::sMeshRenderer::render(const glm::mat4 &viewproj_mat) const {
-    // Wireframe mode
+    // Always wireframe mode
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     glBindVertexArray(VAO);
@@ -148,7 +148,9 @@ void Renderer::sMeshRenderer::render(const glm::mat4 &viewproj_mat) const {
 }
 
 void Renderer::sMeshRenderer::clean() {
-    // TODO
+    glDeleteBuffers(1u, &VBO);
+    glDeleteVertexArrays(1u, &VAO);
+    glDeleteProgram(gl_shader);
 }
 
 void Renderer::sMeshRenderer::add(const glm::mat4 &model, 

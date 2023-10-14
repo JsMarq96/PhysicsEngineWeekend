@@ -15,13 +15,13 @@
 namespace Renderer {
 
     struct sCamera {
-        glm::vec3     position = {0.0f, 0.0f, 0.0f};
+        glm::vec3       position = {0.0f, 0.0f, 0.0f};
 
-        glm::vec3    u = {};
-        glm::vec3    s = {};
-        glm::vec3    f = {};
+        glm::vec3       u = {};
+        glm::vec3       s = {};
+        glm::vec3       f = {};
 
-        glm::mat4 view_mat = {};
+        glm::mat4       view_mat = {};
 
         void get_perspective_projection_matrix(const float FOV,
                                             const float far_plane,

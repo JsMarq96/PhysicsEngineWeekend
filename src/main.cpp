@@ -92,7 +92,7 @@ int main() {
         // Update here
         glm::mat4 vp_mat;
         camera.get_perspective_viewprojection_matrix(90.0f,
-                                                     1000.0f,
+                                                     10.0f,
                                                      0.01f,
                                                      (float) width / height,
                                                      &vp_mat);
@@ -110,6 +110,7 @@ int main() {
         app_state.close_window = glfwGetKey(app_state.window, GLFW_KEY_ESCAPE) == GLFW_PRESS;
     }
 
+    sphere_render.clean();
     
     return 0;
 }
