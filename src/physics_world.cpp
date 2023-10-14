@@ -12,9 +12,12 @@ glm::vec3 rotate_arround(const glm::vec3  &pos,
 void sPhysicsWorld::init() {
     sphere_renderer.create_from_file("resources/sphere.obj");
 
-    camera.look_at({0.0f, 0.0f, 0.0f}, {2.0f, 2.0f, 2.0f});
+    camera.look_at({0.0f, 0.0f, 0.0f}, {2.0f, 1.0f, 2.0f});
 
+    // Clean memory for the bodies
     memset(is_body_enabled, false, sizeof(is_body_enabled));
+    memset(speeds, 0, sizeof(speeds));
+    memset(bodies, 0, sizeof(bodies));
 
     add_body({  .type = SPHERE_COLLIDER,
                 .position = {0.0f, 0.0f, 0.0f},
@@ -40,6 +43,26 @@ void sPhysicsWorld::update(const float delta) {
         ImGui::End();
     }
     
+}
+
+void sPhysicsWorld::physics_update(const float delta) {
+    // Integrate accelerations into velocity
+    for(uint8_t i = 0u; i < BODY_TOTAL_SIZE; i++) {
+        if (!is_body_enabled[i]) {
+            continue;
+        }
+
+        speeds[i].linear_velocity += glm::vec3(0.0f, -10.0f, 0.0f) * delta;
+    }
+
+    // Integrate velocity into position
+    for(uint8_t i = 0u; i < BODY_TOTAL_SIZE; i++) {
+        if (!is_body_enabled[i]) {
+            continue;
+        }
+
+        bodies[i].position += speeds[i].linear_velocity * delta;
+    }
 }
 
 void sPhysicsWorld::render() {

@@ -88,9 +88,12 @@ int main() {
         ImGui::NewFrame();
 
         // Update here
-        application.render();
 
         application.update(delta_time);
+
+        application.physics_update(delta_time);
+
+        application.render();
 
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
