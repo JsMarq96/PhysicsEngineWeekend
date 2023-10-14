@@ -12,7 +12,7 @@ glm::vec3 rotate_arround(const glm::vec3  &pos,
 void sPhysicsWorld::init() {
     sphere_renderer.create_from_file("resources/sphere.obj");
 
-    camera.look_at({0.0f, 0.0f, 0.0f}, {2.0f, 1.0f, 2.0f});
+    camera.look_at({0.0f, 0.0f, 0.0f}, {5.0f, 2.0f, 5.0f});
 
     // Clean memory for the bodies
     memset(is_body_enabled, false, sizeof(is_body_enabled));
@@ -20,8 +20,17 @@ void sPhysicsWorld::init() {
     memset(bodies, 0, sizeof(bodies));
 
     add_body({  .type = SPHERE_COLLIDER,
-                .position = {0.0f, 0.0f, 0.0f},
+                .inv_mass = 1.0f / 5.0f,
+                .position = {0.0f, 1.0f, 0.0f},
                 .scale = {1.0f, 1.0f, 1.0f},
+                .orientation = {1.0f, 0.0f, 0.0f, 0.0f},
+                .color = {0.05f, 0.05f, 0.05f, 1.0f}
+            });
+
+    add_body({  .type = SPHERE_COLLIDER,
+                .inv_mass = 0.0f, // Static body
+                .position = {0.0f, -100.0f, 0.0f},
+                .scale = {100.0f, 100.0f, 100.0f},
                 .orientation = {1.0f, 0.0f, 0.0f, 0.0f},
                 .color = {0.05f, 0.05f, 1.05f, 1.0f}
             });
@@ -32,7 +41,8 @@ void sPhysicsWorld::update(const float delta) {
         ImGui::Begin("Camera control");
 
         bool camera_moved = false;
-        camera_moved |= ImGui::SliderFloat3("Camera look at", (float*)&camera.center, -5.0f, 5.0f);
+        ImGui::SliderFloat3("body pos", (float*)&bodies[1].position, -10.0f, 10.0f);
+        camera_moved |= ImGui::SliderFloat3("Camera look at", (float*)&camera.center, -10.0f, 10.0f);
         camera_moved |= ImGui::SliderFloat("Camera rotation", &camera_angle, 0.01f, 20.14f);
         
         camera.position = rotate_arround(camera.position, glm::vec3(0.0f), glm::radians(camera_angle));
@@ -52,7 +62,7 @@ void sPhysicsWorld::physics_update(const float delta) {
             continue;
         }
 
-        speeds[i].linear_velocity += glm::vec3(0.0f, -10.0f, 0.0f) * delta;
+        apply_impulse(i, glm::vec3(0.0f, -10.0f, 0.0f) * (1.0f / bodies[i].inv_mass) * delta);
     }
 
     // Integrate velocity into position
@@ -60,7 +70,7 @@ void sPhysicsWorld::physics_update(const float delta) {
         if (!is_body_enabled[i]) {
             continue;
         }
-
+        
         bodies[i].position += speeds[i].linear_velocity * delta;
     }
 }
@@ -69,7 +79,7 @@ void sPhysicsWorld::render() {
 
     glm::mat4 vp_mat;
     camera.get_perspective_viewprojection_matrix(90.0f,
-                                                 10.0f,
+                                                 1000.0f,
                                                  0.1f,
                                                  (float) width / height,
                                                  &vp_mat);
@@ -81,15 +91,14 @@ void sPhysicsWorld::render() {
         }
 
         sPhysicsBody &curr_body = bodies[i];
-        //First scale
-        model = glm::scale(glm::mat4(1.0f), curr_body.scale);
+
+        model = glm::translate(glm::mat4(1.0f), curr_body.position);
         model = glm::toMat4(curr_body.orientation) * model;
-        model = glm::translate(model, curr_body.position);
+        model = glm::scale(model, curr_body.scale);        
 
         if (curr_body.type == SPHERE_COLLIDER) {
             sphere_renderer.add(model, curr_body.color);
         }
-        
     }
 
     sphere_renderer.render(vp_mat);

@@ -16,6 +16,7 @@ enum eColliderType : uint8_t {
 
 struct sPhysicsBody {
     eColliderType      type = SPHERE_COLLIDER;
+    float              inv_mass = 0.0f;
     glm::vec3          position = {0.0f, 0.0f, 0.0f};
     glm::vec3          scale = {1.0f, 1.0f, 1.0f};
     glm::quat          orientation = {1.0f, 0.0f, 0.0f, 0.0f};
@@ -65,6 +66,15 @@ struct sPhysicsWorld {
     void render();
     void clean();
     void window_resized(const float height, const float width);
+
+    inline void apply_impulse(const uint32_t i, const glm::vec3 &J) {
+        float inv_mass = bodies[i].inv_mass;
+        if (!is_body_enabled[i] || inv_mass == 0.0f){
+            return;
+        }
+
+        speeds[i].linear_velocity += J * inv_mass;
+    }
 
     inline uint8_t add_body(const sPhysicsBody &new_body) {
         uint8_t index = 0u;

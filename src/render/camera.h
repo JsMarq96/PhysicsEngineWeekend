@@ -29,7 +29,7 @@ namespace Renderer {
                                             const float near_plane,
                                             const float aspect_ratio,
                                             glm::mat4  *result) const {
-            *result = glm::perspective(to_radians(FOV),
+            *result = glm::perspective(glm::radians(FOV),
                                         aspect_ratio,
                                         near_plane,
                                         far_plane);
