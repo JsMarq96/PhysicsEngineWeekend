@@ -28,9 +28,7 @@ namespace Renderer {
                                             const float near_plane,
                                             const float aspect_ratio,
                                             glm::mat4  *result) const {
-            float tan_half_FOV = tan(to_radians(FOV) / 2.0f);
-
-            *result = glm::perspective(FOV,
+            *result = glm::perspective(to_radians(FOV),
                                         aspect_ratio,
                                         near_plane,
                                         far_plane);

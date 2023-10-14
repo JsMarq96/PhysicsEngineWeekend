@@ -9,8 +9,7 @@
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
 
-#include "render/mesh.h"
-#include "render/camera.h"
+#include "physics_world.h"
 
 #define WIN_WIDTH	640
 #define WIN_HEIGHT	480
@@ -64,12 +63,11 @@ int main() {
 
     glfwGetFramebufferSize(app_state.window, &width, &height);
 
-    Renderer::sCamera camera;
+    sPhysicsWorld application = {};
 
-    camera.look_at({0.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 1.0f});
+    application.init();
 
-    Renderer::sMeshRenderer sphere_render;
-    sphere_render.create_from_file("resources/sphere.obj");
+    application.window_resized(height, width);
 
     while(!glfwWindowShouldClose(app_state.window) && !app_state.close_window) {
         glfwMakeContextCurrent(app_state.window);
@@ -90,27 +88,18 @@ int main() {
         ImGui::NewFrame();
 
         // Update here
-        glm::mat4 vp_mat;
-        camera.get_perspective_viewprojection_matrix(90.0f,
-                                                     10.0f,
-                                                     0.01f,
-                                                     (float) width / height,
-                                                     &vp_mat);
-
-        // Frame render here
-        sphere_render.add(glm::mat4(1.0f), {1.0, 0.0, 0.0, 1.0f});
-
-        sphere_render.render(vp_mat);
+        application.render();
 
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+        application.update(delta_time);
+
         glfwSwapBuffers(app_state.window);
 
         // Close window and stop loop
         app_state.close_window = glfwGetKey(app_state.window, GLFW_KEY_ESCAPE) == GLFW_PRESS;
     }
-
-    sphere_render.clean();
     
     return 0;
 }

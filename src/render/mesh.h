@@ -18,7 +18,7 @@ namespace Renderer {
         uint32_t        VAO = 0u;
         uint32_t        VBO = 0u;
 
-        uint16_t        primitive_count = 0u;
+        uint16_t        vertex_count = 0u;
 
         uint32_t        gl_shader = 0u;
 
@@ -27,7 +27,7 @@ namespace Renderer {
         uint16_t        render_count = 0u;
 
         void create_from_file(const char* obj_file);
-        void render(const glm::mat4 &viewproj_mat) const;
+        void render(const glm::mat4 &viewproj_mat);
         void clean();
         void add(const glm::mat4 &model, const glm::vec4 &color);
     };

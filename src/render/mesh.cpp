@@ -65,8 +65,8 @@ void Renderer::sMeshRenderer::create_from_file(const char* obj_file) {
         }
         
         index_offset += 3u;
-        primitive_count = shape.mesh.num_face_vertices.size();
     }
+    vertex_count = shape.mesh.num_face_vertices.size() * 3u;
 
     // Create OpenGL Buffers
     {
@@ -84,7 +84,7 @@ void Renderer::sMeshRenderer::create_from_file(const char* obj_file) {
         glEnableVertexAttribArray(2u);
         glVertexAttribPointer(1u, 2u, GL_FLOAT, GL_FALSE, sizeof(sMeshVertex), (void*) (sizeof(float) * 5u));
 
-        glBufferData(GL_ARRAY_BUFFER, primitive_count * 3u * sizeof(sMeshVertex), raw_mesh, GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, vertex_count * sizeof(sMeshVertex), raw_mesh, GL_STATIC_DRAW);
 
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindVertexArray(0);
@@ -128,7 +128,7 @@ void Renderer::sMeshRenderer::create_from_file(const char* obj_file) {
     free(raw_mesh);
 }
 
-void Renderer::sMeshRenderer::render(const glm::mat4 &viewproj_mat) const {
+void Renderer::sMeshRenderer::render(const glm::mat4 &viewproj_mat) {
     // Always wireframe mode
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
@@ -141,10 +141,11 @@ void Renderer::sMeshRenderer::render(const glm::mat4 &viewproj_mat) const {
     for(uint32_t i = 0u; i < render_count; i++) {
         glUniformMatrix4fv(glGetUniformLocation(gl_shader, "u_model"), 1u, false, (float*) &models[i]);
         glUniform4fv(glGetUniformLocation(gl_shader, "u_color"), 1u, (float*) &colors[i]);
-        glDrawArrays(GL_TRIANGLES, 0, primitive_count);
+        glDrawArrays(GL_TRIANGLES, 0, vertex_count);
     }
 
     glBindVertexArray(0);
+    render_count = 0u;
 }
 
 void Renderer::sMeshRenderer::clean() {
