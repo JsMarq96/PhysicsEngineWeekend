@@ -1,5 +1,8 @@
 #pragma once
+#include <cstdint>
 #include <glm/glm.hpp>
+
+#define OBJECT_COUNT 100u
 
 namespace Renderer {
 
@@ -19,8 +22,12 @@ namespace Renderer {
 
         uint32_t gl_shader = 0u;
 
+        glm::mat4  models[OBJECT_COUNT];
+        glm::vec4  colors[OBJECT_COUNT];
+        uint16_t   render_count = 0u;
+
         void create_from_file(const char* obj_file);
-        void render(const glm::mat4 *models, const glm::vec4 *colors, const uint16_t render_count, const glm::mat4 &viewproj_mat) const;
+        void render(const glm::mat4 &viewproj_mat) const;
         void clean();
     };
 }

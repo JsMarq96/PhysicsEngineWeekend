@@ -14,7 +14,7 @@ void Renderer::sMeshRenderer::create_from_file(const char* obj_file) {
 
     tinyobj::ObjReader reader;
 
-    assert_msg(!reader.ParseFromFile(obj_file, reader_config), 
+    assert_msg(reader.ParseFromFile(obj_file, reader_config), 
                 "Not found the obj file");
 
     const tinyobj::shape_t &shape = reader.GetShapes()[0];
@@ -32,7 +32,7 @@ void Renderer::sMeshRenderer::create_from_file(const char* obj_file) {
         assert_msg(face_vertex_count == 3u, "Non triangulated mesh");
 
         // access to vertex
-        for (uint32_t v = 0; v < 3u; v++) {
+        for (uint32_t v = 0; v < face_vertex_count; v++) {
             tinyobj::index_t idx = shape.mesh.indices[index_offset + v];
 
             glm::vec3 vertex = {0.0f, 0.0f, 0.0f}, normal = {0.0f, 0.0f, 0.0f};
@@ -40,31 +40,31 @@ void Renderer::sMeshRenderer::create_from_file(const char* obj_file) {
 
             // Load vertex
             {
-                vertex.x = attrib.vertices[3u * idx.vertex_index + 0u];
-                vertex.y = attrib.vertices[3u * idx.vertex_index + 1u];
-                vertex.z = attrib.vertices[3u * idx.vertex_index + 2u];
+                vertex.x = attrib.vertices[3u * uint32_t(idx.vertex_index) + 0u];
+                vertex.y = attrib.vertices[3u * uint32_t(idx.vertex_index) + 1u];
+                vertex.z = attrib.vertices[3u * uint32_t(idx.vertex_index) + 2u];
             }
 
             // Load normal, if any
-            if (idx.normal_index >= 0u) {
-                normal.x = attrib.normals[3u * idx.normal_index + 0u];
-                normal.y = attrib.normals[3u * idx.normal_index + 1u];
-                normal.z = attrib.normals[3u * idx.normal_index + 2u];
+            if (idx.normal_index >= 0) {
+                normal.x = attrib.normals[3u * uint32_t(idx.normal_index) + 0u];
+                normal.y = attrib.normals[3u * uint32_t(idx.normal_index) + 1u];
+                normal.z = attrib.normals[3u * uint32_t(idx.normal_index) + 2u];
             }
 
             // Load UVs, if any
-            if (idx.texcoord_index >= 0u) {
-                uv.x = attrib.texcoords[3u * idx.texcoord_index + 0u];
-                uv.y = attrib.texcoords[3u * idx.texcoord_index + 1u];
+            if (idx.texcoord_index >= 0) {
+                uv.x = attrib.texcoords[2u * uint32_t(idx.texcoord_index) + 0u];
+                uv.y = attrib.texcoords[2u * uint32_t(idx.texcoord_index) + 1u];
             }
 
             raw_mesh[raw_mesh_size].vertex = vertex;
             raw_mesh[raw_mesh_size].normal = normal;
             raw_mesh[raw_mesh_size].uv = uv;
             raw_mesh_size++;
-            index_offset += 3u;
         }
-
+        
+        index_offset += 3u;
         primitive_count = shape.mesh.num_face_vertices.size();
     }
 
@@ -102,7 +102,7 @@ void Renderer::sMeshRenderer::create_from_file(const char* obj_file) {
         glCompileShader(vertex_shader);
         glGetShaderiv(vertex_shader, GL_COMPILE_STATUS, &compile_success);
 
-        assert_msg(!compile_success, "Failed compile of vertex shader");
+        assert_msg(compile_success, "Failed compile of vertex shader");
 
         fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
 
@@ -111,7 +111,7 @@ void Renderer::sMeshRenderer::create_from_file(const char* obj_file) {
         glCompileShader(fragment_shader);
         glGetShaderiv(fragment_shader, GL_COMPILE_STATUS, &compile_success);
     
-        assert_msg(!compile_success, "Failed compile of fragment shader");
+        assert_msg(compile_success, "Failed compile of fragment shader");
 
         gl_shader = glCreateProgram();
         glAttachShader(gl_shader, vertex_shader);
@@ -119,7 +119,7 @@ void Renderer::sMeshRenderer::create_from_file(const char* obj_file) {
         glLinkProgram(gl_shader);
         glGetProgramiv(gl_shader, GL_LINK_STATUS, &compile_success);
 
-        assert_msg(!compile_success, "Failed linking of shader");
+        assert_msg(compile_success, "Failed linking of shader");
 
         glDeleteShader(vertex_shader);
         glDeleteShader(fragment_shader);
@@ -128,10 +128,7 @@ void Renderer::sMeshRenderer::create_from_file(const char* obj_file) {
     free(raw_mesh);
 }
 
-void Renderer::sMeshRenderer::render(const glm::mat4 *models, 
-                           const glm::vec4 *colors, 
-                           const uint16_t render_count, 
-                           const glm::mat4 &viewproj_mat) const {
+void Renderer::sMeshRenderer::render(const glm::mat4 &viewproj_mat) const {
     // Wireframe mode
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 

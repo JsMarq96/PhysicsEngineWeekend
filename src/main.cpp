@@ -64,9 +64,12 @@ int main() {
     glfwGetFramebufferSize(app_state.window, &width, &height);
 
 
-    Renderer::sMeshRenderer mesh_render;
+    Renderer::sMeshRenderer sphere_render;
+    sphere_render.create_from_file("resources/sphere.obj");
 
-    mesh_render.create_from_file("../resources/sphere.obj");
+    glm::mat4 sphere_models[10];
+    
+
 
     while(!glfwWindowShouldClose(app_state.window) && !app_state.close_window) {
         glfwMakeContextCurrent(app_state.window);
