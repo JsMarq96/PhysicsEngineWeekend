@@ -104,6 +104,8 @@ int main() {
         // Close window and stop loop
         app_state.close_window = glfwGetKey(app_state.window, GLFW_KEY_ESCAPE) == GLFW_PRESS;
     }
+
+    application.clean();
     
     return 0;
 }

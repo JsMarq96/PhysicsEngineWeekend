@@ -1,5 +1,6 @@
 #include "physics_world.h"
 
+#include "glm/gtx/norm.hpp"
 #include "glm/matrix.hpp"
 #include <imgui.h>
 #include <glm/glm.hpp>
@@ -23,6 +24,7 @@ void sPhysicsWorld::init() {
 
     add_body({  .type = SPHERE_COLLIDER,
                 .inv_mass = 1.0f / 5.0f,
+                .elasticity = 0.5f,
                 .position = {0.0f, 3.0f, 0.0f},
                 .scale = {1.0f, 1.0f, 1.0f},
                 .orientation = {1.0f, 0.0f, 0.0f, 0.0f},
@@ -31,6 +33,7 @@ void sPhysicsWorld::init() {
 
     add_body({  .type = SPHERE_COLLIDER,
                 .inv_mass = 0.0f, // Static body
+                .elasticity = 1.0f,
                 .position = {0.0f, -100.0f, 0.0f},
                 .scale = {100.0f, 100.0f, 100.0f},
                 .orientation = {1.0f, 0.0f, 0.0f, 0.0f},
@@ -69,6 +72,7 @@ void sPhysicsWorld::physics_update(const float delta) {
 
     // Collision detection
     // Only skip tests in one direction with static objects
+    collision_count = 0u;
     for(uint8_t i = 0u; i < BODY_TOTAL_SIZE; i++) {
         if (!is_body_enabled[i] || bodies[i].inv_mass == 0.0f) {
             continue;
@@ -78,9 +82,11 @@ void sPhysicsWorld::physics_update(const float delta) {
                 continue;
             }
 
-            if (Intersection::sphere_sphere(bodies[i], bodies[j])) {
-                speeds[i].linear_velocity = {0.0f, 0.0f, 0.0f};
-                speeds[j].linear_velocity = {0.0f, 0.0f, 0.0f};
+            if (Intersection::sphere_sphere(bodies[i], bodies[j], &collisions_in_frame[collision_count])) {
+                collisions_in_frame[collision_count].body1_index = i;
+                collisions_in_frame[collision_count].body2_index = j;
+                resolve_collision(collisions_in_frame[collision_count]);
+                collision_count++;
             }
         }
     }
@@ -93,6 +99,27 @@ void sPhysicsWorld::physics_update(const float delta) {
 
         bodies[i].position += speeds[i].linear_velocity * delta;
     }
+}
+
+void sPhysicsWorld::resolve_collision(const sCollisionManifold &manifold) {
+    const float elasticity = bodies[manifold.body1_index].elasticity * bodies[manifold.body2_index].elasticity; 
+
+    // Collision impulse
+    const glm::vec3 linear_velocity_delta = speeds[manifold.body1_index].linear_velocity - speeds[manifold.body2_index].linear_velocity;
+    const float impulse = -(1.0f + elasticity) * glm::dot(linear_velocity_delta, manifold.normal) / (bodies[manifold.body1_index].inv_mass + bodies[manifold.body2_index].inv_mass);
+
+    apply_impulse(manifold.body1_index, manifold.normal * impulse);
+    apply_impulse(manifold.body2_index, manifold.normal * impulse * 1.0f);
+
+
+    // Manage interpenetration
+    const float margin_body1 = bodies[manifold.body1_index].inv_mass / (bodies[manifold.body1_index].inv_mass + bodies[manifold.body2_index].inv_mass);
+    const float margin_body2 = bodies[manifold.body2_index].inv_mass / (bodies[manifold.body1_index].inv_mass + bodies[manifold.body2_index].inv_mass);
+    
+    const glm::vec3 contact_distance = manifold.point_in_body2_world - manifold.point_in_body1_world;
+    
+    bodies[manifold.body1_index].position += contact_distance * margin_body1;
+    bodies[manifold.body2_index].position -= contact_distance * margin_body2;
 }
 
 void sPhysicsWorld::render() {

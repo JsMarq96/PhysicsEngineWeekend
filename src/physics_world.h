@@ -9,6 +9,7 @@
 #include "physics_body.h"
 
 #define BODY_TOTAL_SIZE 254u
+#define MANIFOLD_COUNT (BODY_TOTAL_SIZE * BODY_TOTAL_SIZE)
 
 struct sPhysicsWorld {
     uint32_t                    width = 0u;
@@ -18,6 +19,9 @@ struct sPhysicsWorld {
     sBodySpeed                  speeds[BODY_TOTAL_SIZE];
     bool                        is_body_enabled[BODY_TOTAL_SIZE];
 
+    uint16_t                    collision_count = 0u;
+    sCollisionManifold          collisions_in_frame[MANIFOLD_COUNT];
+
     float                       camera_angle = 0.0f;
     Renderer::sCamera           camera;
     Renderer::sMeshRenderer     sphere_renderer;
@@ -25,6 +29,7 @@ struct sPhysicsWorld {
     void init();
     void update(const float delta);
     void physics_update(const float delta);
+    void resolve_collision(const sCollisionManifold &manifold);
     void render();
     void clean();
     void window_resized(const float height, const float width);
