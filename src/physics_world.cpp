@@ -25,7 +25,7 @@ void sPhysicsWorld::init() {
     add_body({  .type = SPHERE_COLLIDER,
                 .inv_mass = 1.0f / 5.0f,
                 .elasticity = 0.5f,
-                .position = {0.0f, 3.0f, 0.0f},
+                .position = {0.0f, 3.0f, 0.5f},
                 .scale = {1.0f, 1.0f, 1.0f},
                 .orientation = {1.0f, 0.0f, 0.0f, 0.0f},
                 .color = {0.05f, 0.05f, 0.05f, 1.0f}
@@ -120,6 +120,31 @@ void sPhysicsWorld::resolve_collision(const sCollisionManifold &manifold) {
     
     bodies[manifold.body1_index].position += contact_distance * margin_body1;
     bodies[manifold.body2_index].position -= contact_distance * margin_body2;
+}
+
+inline uint8_t sPhysicsWorld::add_body(const sPhysicsBody &new_body) {
+    uint8_t index = 0u;
+    for(; index < BODY_TOTAL_SIZE; index++) {
+        if (!is_body_enabled[index]) {
+            break;
+        }
+    }
+
+    // Compute inertia tensors, inlocal and world spaces
+    glm::mat3 inv_inertia_tensor;
+    if (new_body.type == SPHERE_COLLIDER) {
+        inv_inertia_tensor = glm::mat3(2.0f * new_body.scale.x * new_body.scale.x / 5.0f);
+    }
+
+    inv_inertia_tensor = glm::inverse(inv_inertia_tensor);
+    glm::mat3 body_rotation = glm::toMat3(new_body.orientation);
+    local_inertia_tensors[index] = inv_inertia_tensor * new_body.inv_mass;
+    world_inertia_tensors[index] = body_rotation * (inv_inertia_tensor * new_body.inv_mass) * glm::transpose(body_rotation);
+
+    is_body_enabled[index] = true;
+    bodies[index] = new_body;
+
+    return index;
 }
 
 void sPhysicsWorld::render() {
