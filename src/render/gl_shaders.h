@@ -21,5 +21,5 @@
                                           "uniform vec4 u_color; \n"
                                           "in vec3 v_color;\n"
                                           "void main() {\n"
-                                          "	out_color = vec4(v_color, 1.0);\n"
+                                          "	out_color = u_color;//vec4(v_color, 1.0);\n"
                                           "}\n";

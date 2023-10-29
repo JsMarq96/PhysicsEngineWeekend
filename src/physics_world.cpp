@@ -1,11 +1,13 @@
 #include "physics_world.h"
 
+#include "GL/glcorearb.h"
 #include "glm/ext/quaternion_geometric.hpp"
 #include "glm/gtx/norm.hpp"
 #include "glm/matrix.hpp"
 #include <imgui.h>
 #include <glm/glm.hpp>
 #include <glm/gtx/quaternion.hpp>
+#include <GL/gl3w.h>
 
 #include "intersections.h"
 
@@ -15,6 +17,7 @@ glm::vec3 rotate_arround(const glm::vec3  &pos,
 
 void sPhysicsWorld::init() {
     sphere_renderer.create_from_file("resources/sphere.obj");
+    debug_renderer.create_from_file("resources/sphere.obj");
 
     camera.look_at({0.0f, 0.0f, 0.0f}, {5.0f, 2.0f, 5.0f});
 
@@ -239,15 +242,18 @@ void sPhysicsWorld::render() {
 
     for(uint16_t i = 0u; i < collision_count; i++) {
         model = glm::translate(glm::mat4(1.0f), collisions_in_frame[i].point_in_body1_world);
-        model = glm::scale(model, glm::vec3(0.05f, 0.05f, 0.05f));
-        sphere_renderer.add(model, {1.0f, 0.0f, 0.0f, 1.0f});
+        model = glm::scale(model, glm::vec3(0.1f, 0.1f, 0.1f));
+        debug_renderer.add(model, {1.0f, 0.0f, 0.0f, 1.0f});
 
         model = glm::translate(glm::mat4(1.0f), collisions_in_frame[i].point_in_body2_world);
-        model = glm::scale(model, glm::vec3(0.05f, 0.05f, 0.05f));
-        sphere_renderer.add(model, {1.0f, 1.0f, 0.0f, 1.0f});
+        model = glm::scale(model, glm::vec3(0.1f, 0.1f, 0.1f));
+        debug_renderer.add(model, {1.0f, 0.0f, 0.0f, 1.0f});
     }
 
     sphere_renderer.render(vp_mat);
+    glDisable(GL_DEPTH_TEST);
+    debug_renderer.render(vp_mat);
+    glEnable(GL_DEPTH_TEST);
 }
 
 void sPhysicsWorld::clean() {

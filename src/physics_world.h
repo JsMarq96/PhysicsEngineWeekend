@@ -30,6 +30,7 @@ struct sPhysicsWorld {
     float                       camera_angle = 0.0f;
     Renderer::sCamera           camera;
     Renderer::sMeshRenderer     sphere_renderer;
+    Renderer::sMeshRenderer     debug_renderer;
     
     void init();
     void update(const float delta);
