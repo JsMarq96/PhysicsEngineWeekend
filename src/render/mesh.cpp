@@ -82,7 +82,7 @@ void Renderer::sMeshRenderer::create_from_file(const char* obj_file) {
         glEnableVertexAttribArray(1u);
         glVertexAttribPointer(1u, 3u, GL_FLOAT, GL_FALSE, sizeof(sMeshVertex), (void*) (sizeof(float) * 3u));
         glEnableVertexAttribArray(2u);
-        glVertexAttribPointer(1u, 2u, GL_FLOAT, GL_FALSE, sizeof(sMeshVertex), (void*) (sizeof(float) * 5u));
+        glVertexAttribPointer(2u, 2u, GL_FLOAT, GL_FALSE, sizeof(sMeshVertex), (void*) (sizeof(float) * 5u));
 
         glBufferData(GL_ARRAY_BUFFER, vertex_count * sizeof(sMeshVertex), raw_mesh, GL_STATIC_DRAW);
 
