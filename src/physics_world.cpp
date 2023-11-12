@@ -133,8 +133,6 @@ void sPhysicsWorld::physics_update(const float delta) {
 
                 collisions_in_frame[collision_count].point_in_body1_world = point_on_body1;
                 collisions_in_frame[collision_count].point_in_body2_world = point_on_body2;
-                collisions_in_frame[collision_count].point_in_body1_local = bodies[i].world_to_body_space(point_on_body1);
-                collisions_in_frame[collision_count].point_in_body2_local = bodies[j].world_to_body_space(point_on_body2);
                 collisions_in_frame[collision_count].normal = glm::normalize(bodies[i].position - bodies[j].position);
 
                 update_body(i, -ToI);
