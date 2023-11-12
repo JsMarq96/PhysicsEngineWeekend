@@ -26,11 +26,14 @@ struct sPhysicsWorld {
 
     uint16_t                    collision_count = 0u;
     sCollisionManifold          collisions_in_frame[MANIFOLD_COUNT];
+    uint16_t                    collision_index_in_frame[MANIFOLD_COUNT];
 
     float                       camera_angle = 0.0f;
     Renderer::sCamera           camera;
     Renderer::sMeshRenderer     sphere_renderer;
     Renderer::sMeshRenderer     debug_renderer;
+
+    bool start = false;
     
     void init();
     void update(const float delta);

@@ -79,15 +79,16 @@ int main() {
         glClearColor(0.50f, 0.50f, 0.60f, 1.0f);
         glEnable(GL_DEPTH_TEST);
 
-        double curr_time = glfwGetTime();
-        double delta_time = curr_time - prev_frame_time;
-        prev_frame_time = curr_time;
-
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
         // Update here
+        double curr_time = glfwGetTime();
+        double delta_time = curr_time - prev_frame_time;
+        prev_frame_time = curr_time;
+
+        //std::cout << delta_time << std::endl;
 
         application.update(delta_time);
 

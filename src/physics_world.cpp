@@ -8,12 +8,16 @@
 #include <glm/glm.hpp>
 #include <glm/gtx/quaternion.hpp>
 #include <GL/gl3w.h>
+#define __STDC_WANT_LIB_EXT1__
+#include <stdlib.h>
 
 #include "intersections.h"
 
 glm::vec3 rotate_arround(const glm::vec3  &pos, 
                          const glm::vec3  &center, 
                          const float angle);
+
+int compare_contacts(const void *p1, const void *p2, void *context);
 
 void sPhysicsWorld::init() {
     sphere_renderer.create_from_file("resources/sphere.obj");
@@ -27,22 +31,36 @@ void sPhysicsWorld::init() {
     memset(bodies, 0, sizeof(bodies));
 
     add_body({  .type = SPHERE_COLLIDER,
-                .inv_mass = 1.0f / 2.0f,
-                .elasticity = 0.5f,
-                .position = {0.0f, 4.0f, 0.0f},
-                .scale = {1.0f, 1.0f, 1.0f},
+                .inv_mass = 1.0f,
+                .elasticity = 0.0f,
+                .friction = 0.5f,
+                .position = {4.0f, 0.51f, 0.0f},
+                .scale = {0.50f, 0.50f, 0.50f},
                 .orientation = {1.0f, 0.0f, 0.0f, 0.0f},
                 .color = {0.05f, 0.05f, 0.05f, 1.0f}
+            });
+    
+    add_body({  .type = SPHERE_COLLIDER,
+                .inv_mass = 0.0f,
+                .elasticity = 0.0f,
+                .friction = 0.5f,
+                .position = {-4.0f, 0.50f, 0.0f},
+                .scale = {0.50f, 0.50f, 0.50f},
+                .orientation = {1.0f, 0.0f, 0.0f, 0.0f},
+                .color = {0.05f, 1.05f, 0.05f, 1.0f}
             });
 
     add_body({  .type = SPHERE_COLLIDER,
                 .inv_mass = 0.0f, // Static body
                 .elasticity = 1.0f,
-                .position = {0.0f, -100.0f, 0.0f},
-                .scale = {100.0f, 100.0f, 100.0f},
+                .friction = 0.0f,
+                .position = {0.0f, -1000.0f, 0.0f},
+                .scale = {1000.0f, 1000.0f, 1000.0f},
                 .orientation = {1.0f, 0.0f, 0.0f, 0.0f},
                 .color = {0.05f, 0.05f, 1.05f, 1.0f}
             });
+
+    //speeds[0].linear_velocity = {-1000.0f, 0.0f, 0.0f};
 }
 void sPhysicsWorld::update(const float delta) {
     // ImGUI & camera controls
@@ -67,6 +85,14 @@ void sPhysicsWorld::update(const float delta) {
 
 void sPhysicsWorld::physics_update(const float delta) {
     ImGui::Begin("Physics update");
+    if (ImGui::Button("Start")) {
+        start = true;
+        speeds[0].linear_velocity = {-1000.0f, 0.0f, 0.0f};
+    }
+    if (!start) {
+        ImGui::End();
+        return;
+    }
     // Integrate accelerations into velocity
     for(uint8_t i = 0u; i < BODY_TOTAL_SIZE; i++) {
         if (!is_body_enabled[i] || bodies[i].inv_mass == 0.0f) {
@@ -79,6 +105,8 @@ void sPhysicsWorld::physics_update(const float delta) {
     // Collision detection
     // Only skip tests in one direction with static objects
     collision_count = 0u;
+    glm::vec3 point_on_body1, point_on_body2;
+    float ToI;
     for(uint8_t i = 0u; i < BODY_TOTAL_SIZE; i++) {
         if (!is_body_enabled[i] || bodies[i].inv_mass == 0.0f) {
             continue;
@@ -88,32 +116,72 @@ void sPhysicsWorld::physics_update(const float delta) {
                 continue;
             }
 
-            if (Intersection::sphere_sphere(bodies[i], bodies[j], &collisions_in_frame[collision_count])) {
+            if (Intersection::sphere_sphere_ccd(bodies[i], 
+                                                speeds[i], 
+                                                bodies[j],  
+                                                speeds[j], 
+                                                delta, 
+                                                &ToI, 
+                                                &point_on_body1, 
+                                                &point_on_body2)) {
                 collisions_in_frame[collision_count].body1_index = i;
                 collisions_in_frame[collision_count].body2_index = j;
-                resolve_collision(collisions_in_frame[collision_count]);
 
-                ImGui::Text("Collision point obj %i: %f %f %f and %i: %f %f %f", 
-                            i, 
-                            collisions_in_frame[collision_count].point_in_body1_world.x,
-                            collisions_in_frame[collision_count].point_in_body1_world.y,
-                            collisions_in_frame[collision_count].point_in_body1_world.z,
-                            j,
-                            collisions_in_frame[collision_count].point_in_body2_world.x,
-                            collisions_in_frame[collision_count].point_in_body2_world.y,
-                            collisions_in_frame[collision_count].point_in_body2_world.z);
+                // Continuous collision detection
+                update_body(i, ToI);
+                update_body(j, ToI);
 
+                collisions_in_frame[collision_count].point_in_body1_world = point_on_body1;
+                collisions_in_frame[collision_count].point_in_body2_world = point_on_body2;
+                collisions_in_frame[collision_count].point_in_body1_local = bodies[i].world_to_body_space(point_on_body1);
+                collisions_in_frame[collision_count].point_in_body2_local = bodies[j].world_to_body_space(point_on_body2);
+                collisions_in_frame[collision_count].normal = glm::normalize(bodies[i].position - bodies[j].position);
+
+                update_body(i, -ToI);
+                update_body(j, -ToI);
+
+                collisions_in_frame[collision_count].time_of_impact = ToI;
+                collisions_in_frame[collision_count].separation_distance = glm::length(bodies[j].position - bodies[i].position) - (bodies[i].scale.x + bodies[j].scale.x);
+
+                ImGui::Text("Collision point obj %i and %i", 
+                            i,j);
+                collision_index_in_frame[collision_count] = collision_count;
                 collision_count++;
             }
         }
     }
 
+    // Order collisions by ToI
+    if (collision_count > 1u) {
+        qsort_r(collision_index_in_frame, collision_count, sizeof(sCollisionManifold), compare_contacts, (void*) collisions_in_frame);
+    }
+
+    float accumulated_time = 0.0f;
+    for(uint16_t i = 0u; i < collision_count; i++) {
+        const uint16_t index = collision_index_in_frame[i];
+        sCollisionManifold &curr_manifold = collisions_in_frame[index];
+
+        if (bodies[curr_manifold.body1_index].inv_mass == 0.0f && bodies[curr_manifold.body2_index].inv_mass == 0.0f) {
+            continue;
+        }
+        const float accumulated_delta = curr_manifold.time_of_impact - accumulated_time;
+
+        for(uint16_t j = 0u; j < BODY_TOTAL_SIZE; j++) {
+            update_body(j, accumulated_delta);
+        }
+
+        resolve_collision(curr_manifold);
+
+        accumulated_time += accumulated_delta;
+    }
+
     // Integrate velocity into position
+    const float time_remaining = delta - accumulated_time;
     for(uint8_t i = 0u; i < BODY_TOTAL_SIZE; i++) {
         if (!is_body_enabled[i] || bodies[i].inv_mass == 0.0f) {
             continue;
         }
-        update_body(i, delta);
+        update_body(i, time_remaining);
     }
 
     ImGui::End();
@@ -155,7 +223,7 @@ void sPhysicsWorld::resolve_collision(const sCollisionManifold &manifold) {
     const glm::vec3 r1 = manifold.point_in_body1_world - get_center_of_mass_in_world(body1);
     const glm::vec3 r2 = manifold.point_in_body2_world - get_center_of_mass_in_world(body2);
 
-    // Collision impulse
+    // Collision Normal impulse
     // Angular factor for the impulse
     const glm::vec3 angular_factor_body1 = glm::cross(get_inverse_inertia_tensor_in_world(body1) * glm::cross(r1, manifold.normal), r1);
     const glm::vec3 angular_factor_body2 = glm::cross(get_inverse_inertia_tensor_in_world(body2) * glm::cross(r2, manifold.normal), r2);
@@ -174,14 +242,37 @@ void sPhysicsWorld::resolve_collision(const sCollisionManifold &manifold) {
     apply_impulse(manifold.body1_index, manifold.normal * impulse * -1.0f, manifold.point_in_body1_world);
     apply_impulse(manifold.body2_index, manifold.normal * impulse, manifold.point_in_body2_world);
 
+    // Tangential friction impulse
+    const float friction = bodies[manifold.body1_index].friction * bodies[manifold.body2_index].friction;
+    
+    // Compute tangent to velocity
+    const glm::vec3 normal_velocity = manifold.normal * glm::dot(manifold.normal, velocity_delta);
+    const glm::vec3 tangent_velocity = velocity_delta - normal_velocity;
+    const glm::vec3 relative_tangent_velocity = glm::normalize(tangent_velocity);
+
+    // Compute inertia
+    const glm::vec3 inertia_body1 = glm::cross(get_inverse_inertia_tensor_in_world(manifold.body1_index) * glm::cross(r1, relative_tangent_velocity), r1);
+    const glm::vec3 inertia_body2 = glm::cross(get_inverse_inertia_tensor_in_world(manifold.body2_index) * glm::cross(r2, relative_tangent_velocity), r2);
+    const float inv_inertia = glm::dot(inertia_body1 + inertia_body2, relative_tangent_velocity);
+
+    // Tangential impulse
+    const float reduced_mass = 1.0f / (bodies[manifold.body1_index].inv_mass + bodies[manifold.body2_index].inv_mass + inv_inertia);
+    const glm::vec3 friction_impulse = tangent_velocity * reduced_mass * friction;
+
+    apply_impulse(manifold.body1_index, friction_impulse * -1.0f, manifold.point_in_body1_world);
+    apply_impulse(manifold.body2_index, friction_impulse, manifold.point_in_body2_world);
+
     // Manage interpenetration
-    const float margin_body1 = bodies[manifold.body1_index].inv_mass / (bodies[manifold.body1_index].inv_mass + bodies[manifold.body2_index].inv_mass);
-    const float margin_body2 = bodies[manifold.body2_index].inv_mass / (bodies[manifold.body1_index].inv_mass + bodies[manifold.body2_index].inv_mass);
+    if (manifold.time_of_impact == 0.0f) {
+        const float margin_body1 = bodies[manifold.body1_index].inv_mass / (bodies[manifold.body1_index].inv_mass + bodies[manifold.body2_index].inv_mass);
+        const float margin_body2 = bodies[manifold.body2_index].inv_mass / (bodies[manifold.body1_index].inv_mass + bodies[manifold.body2_index].inv_mass);
+        
+        const glm::vec3 contact_distance = manifold.point_in_body2_world - manifold.point_in_body1_world;
+        
+        bodies[manifold.body1_index].position += contact_distance * margin_body1;
+        bodies[manifold.body2_index].position -= contact_distance * margin_body2;
+    }
     
-    const glm::vec3 contact_distance = manifold.point_in_body2_world - manifold.point_in_body1_world;
-    
-    bodies[manifold.body1_index].position += contact_distance * margin_body1;
-    bodies[manifold.body2_index].position -= contact_distance * margin_body2;
 }
 
 
@@ -216,7 +307,7 @@ void sPhysicsWorld::render() {
 
     glm::mat4 vp_mat;
     camera.get_perspective_viewprojection_matrix(90.0f,
-                                                 1000.0f,
+                                                 2000.0f,
                                                  0.1f,
                                                  (float) width / height,
                                                  &vp_mat);
@@ -266,6 +357,9 @@ void sPhysicsWorld::window_resized(const float h, const float w) {
 }
 
 
+
+// HELPER FUNCTIONS
+
 glm::vec3 rotate_arround(const glm::vec3  &pos, 
                          const glm::vec3  &center, 
                          const float angle) {
@@ -276,4 +370,23 @@ glm::vec3 rotate_arround(const glm::vec3  &pos,
   float nz = pos.x * s + pos.z * c;
 
   return glm::vec3(nx + center.x, pos.y, nz + center.z);
+}
+
+int compare_contacts(const void *p1, const void *p2, void *context) {
+    uint16_t col1_index = *(uint16_t*) p1;
+    uint16_t col2_index = *(uint16_t*) p2;
+
+    sCollisionManifold *coll_array = (sCollisionManifold*) context;
+
+    sCollisionManifold *col1 = &coll_array[col1_index];
+    sCollisionManifold *col2 = &coll_array[col2_index];
+
+    if (col1->time_of_impact < col2->time_of_impact) {
+        return -1;
+    }
+    if (col1->time_of_impact == col2->time_of_impact) {
+        return 0;
+    }
+
+    return 1;
 }

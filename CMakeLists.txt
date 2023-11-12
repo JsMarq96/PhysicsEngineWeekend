@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.21)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+set(CMAKE_BUILD_PARALLEL_LEVEL 6)
+
 project(phys_weekend)
 
 file(GLOB H_SOURCES "src/*.h")

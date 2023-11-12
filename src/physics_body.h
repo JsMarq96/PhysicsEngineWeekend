@@ -11,8 +11,8 @@ enum eColliderType : uint8_t {
 struct sCollisionManifold {
     glm::vec3 point_in_body1_world;
     glm::vec3 point_in_body2_world;
-    //glm::vec3 point_in_body1_local;
-    //glm::vec3 point_in_body2_local;
+    glm::vec3 point_in_body1_local;
+    glm::vec3 point_in_body2_local;
 
     glm::vec3 normal;
     float separation_distance;
@@ -27,6 +27,7 @@ struct sPhysicsBody {
     eColliderType      type = SPHERE_COLLIDER;
     float              inv_mass = 0.0f;
     float              elasticity = 0.0f;
+    float              friction = 0.0f;
     glm::vec3          position = {0.0f, 0.0f, 0.0f};
     glm::vec3          scale = {1.0f, 1.0f, 1.0f};
     glm::quat          orientation = {1.0f, 0.0f, 0.0f, 0.0f};
